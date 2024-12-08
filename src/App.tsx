@@ -21,11 +21,11 @@ export const App: React.FC = () => {
       try {
         const fetchedTodos = await getTodos();
 
-        setTodos(fetchedTodos);
+        setTimeout(() => setTodos(fetchedTodos), 300);
       } catch {
         setError('Unable to load todos');
       } finally {
-        setIsLoading(false);
+        setTimeout(() => setIsLoading(false), 300);
       }
     };
 
@@ -57,6 +57,17 @@ export const App: React.FC = () => {
       return;
     }
 
+    const tempId = `temp-${Date.now()}`;
+    const tempTodo: Todo = {
+      id: +tempId,
+      title: newTodo.trim(),
+      completed: false,
+      userId: USER_ID,
+    };
+
+    setTodos(prevTodos => [...prevTodos, tempTodo]);
+    setNewTodo('');
+
     setIsLoading(true);
     try {
       const newTodoData = await client.post<Todo>('/todos', {
@@ -65,13 +76,16 @@ export const App: React.FC = () => {
         completed: false,
       });
 
-      setTodos([...todos, newTodoData]);
-      setNewTodo('');
+      setTodos(prevTodos =>
+        prevTodos.map(todo => (todo.id === +tempId ? newTodoData : todo)),
+      );
     } catch {
+      // setTodos(prevTodos => prevTodos.filter(todo => todo.id !== -tempId));
       setError('Unable to add todo');
-    } finally {
       setIsLoading(false);
-    }
+    } //finally {
+    //
+    //}
   };
 
   const handleClearCompleted = async () => {
@@ -120,39 +134,42 @@ export const App: React.FC = () => {
           </form>
         </header>
 
+        {/* isLoading  && todos.length === 0  ? ( */}
+        {/*  <div data-cy="TodoLoader" className="loader"> */}
+        {/*    Loading... */}
+        {/*  </div> */}
+        {/*  : ( */}
         <section className="todoapp__main" data-cy="TodoList">
-          {isLoading && todos.length === 0 ? (
-            <div>Loading...</div>
-          ) : (
-            filteredTodos.map(todo => (
-              <div
-                key={todo.id}
-                data-cy="Todo"
-                className={`todo ${todo.completed ? 'completed' : ''}`}
-              >
-                <label className="todo__status-label">
-                  <input
-                    data-cy="TodoStatus"
-                    type="checkbox"
-                    className="todo__status"
-                    checked={todo.completed}
-                    readOnly
-                  />
-                </label>
+          {filteredTodos.map(todo => (
+            <div
+              key={todo.id}
+              data-cy="Todo"
+              className={`todo ${todo.completed ? 'completed' : ''} ${
+                todo.id.toString().startsWith('temp-') ? 'temp-item' : ''
+              }`}
+            >
+              <label className="todo__status-label">
+                <input
+                  data-cy="TodoStatus"
+                  type="checkbox"
+                  className="todo__status"
+                  checked={todo.completed}
+                  readOnly
+                />
+              </label>
 
-                <span data-cy="TodoTitle" className="todo__title">
-                  {todo.title}
-                </span>
-                <button
-                  type="button"
-                  className="todo__remove"
-                  data-cy="TodoDelete"
-                >
-                  ×
-                </button>
-              </div>
-            ))
-          )}
+              <span data-cy="TodoTitle" className="todo__title">
+                {todo.title}
+              </span>
+              <button
+                type="button"
+                className="todo__remove"
+                data-cy="TodoDelete"
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </section>
 
         {todos.length > 0 && (
@@ -204,21 +221,20 @@ export const App: React.FC = () => {
           </footer>
         )}
 
-        {error && (
-          <div
-            data-cy="ErrorNotification"
-            className={`notification is-danger is-light has-text-weight-normal temp-item-exit-active ${error ? 'has-error' : ''}`}
-          >
-            <button
-              type="button"
-              className="delete"
-              data-cy="HideErrorButton"
-              onClick={() => setError(null)}
-            />
-            {error}
-          </div>
-        )}
-
+        <div
+          data-cy="ErrorNotification"
+          className={`notification is-danger is-light has-text-weight-normal ${
+            error ? '' : 'hidden'
+          }`}
+        >
+          <button
+            type="button"
+            className="delete"
+            data-cy="HideErrorButton"
+            onClick={() => setError(null)}
+          />
+          {error || ''}
+        </div>
       </div>
     </div>
   );
