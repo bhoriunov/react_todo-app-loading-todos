@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useEffect, useState } from 'react';
@@ -83,9 +84,10 @@ export const App: React.FC = () => {
       // setTodos(prevTodos => prevTodos.filter(todo => todo.id !== -tempId));
       setError('Unable to add todo');
       setIsLoading(false);
-    } //finally {
-    //
-    //}
+      setTodos(prevTodos => prevTodos.filter(todo => todo.id !== +tempId));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClearCompleted = async () => {
@@ -134,11 +136,6 @@ export const App: React.FC = () => {
           </form>
         </header>
 
-        {/* isLoading  && todos.length === 0  ? ( */}
-        {/*  <div data-cy="TodoLoader" className="loader"> */}
-        {/*    Loading... */}
-        {/*  </div> */}
-        {/*  : ( */}
         <section className="todoapp__main" data-cy="TodoList">
           {filteredTodos.map(todo => (
             <div
@@ -165,9 +162,27 @@ export const App: React.FC = () => {
                 type="button"
                 className="todo__remove"
                 data-cy="TodoDelete"
+                disabled={todo.id.toString().startsWith('temp-')}
+                onClick={() => {
+                  if (!todo.id.toString().startsWith('temp-')) {
+                    setTodos(prevTodos =>
+                      prevTodos.filter(t => t.id !== todo.id),
+                    );
+                    client
+                      .delete(`/todos/${todo.id}`)
+                      .catch(() => setError('Unable to delete todo'));
+                  }
+                }}
               >
                 ×
               </button>
+
+              {todo.id.toString().startsWith('temp-') && (
+                <div data-cy="TodoLoader" className="modal overlay">
+                  <div className="modal-background has-background-whitester"></div>
+                  <div className="loader"></div>
+                </div>
+              )}
             </div>
           ))}
         </section>
@@ -220,21 +235,20 @@ export const App: React.FC = () => {
             </button>
           </footer>
         )}
-
-        <div
-          data-cy="ErrorNotification"
-          className={`notification is-danger is-light has-text-weight-normal ${
-            error ? '' : 'hidden'
-          }`}
-        >
-          <button
-            type="button"
-            className="delete"
-            data-cy="HideErrorButton"
-            onClick={() => setError(null)}
-          />
-          {error || ''}
-        </div>
+      </div>
+      <div
+        data-cy="ErrorNotification"
+        className={`notification is-danger is-light has-text-weight-normal ${
+          error ? '' : 'hidden'
+        }`}
+      >
+        <button
+          type="button"
+          className="delete"
+          data-cy="HideErrorButton"
+          onClick={() => setError(null)}
+        />
+        {error || ''}
       </div>
     </div>
   );
