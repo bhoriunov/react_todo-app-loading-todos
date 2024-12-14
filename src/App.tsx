@@ -33,6 +33,14 @@ export const App: React.FC = () => {
     fetchTodos();
   }, []);
 
+  useEffect((): void => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   if (!USER_ID) {
     return <UserWarning />;
   }
@@ -111,14 +119,6 @@ export const App: React.FC = () => {
   const completedTodosCount = todos.filter(todo => todo.completed).length;
   const activeTodosCount = todos.filter(todo => !todo.completed).length;
 
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
-
   return (
     <div className="todoapp">
       <h1 className="todoapp__title">todos</h1>
@@ -145,9 +145,7 @@ export const App: React.FC = () => {
             <div
               key={todo.id}
               data-cy="Todo"
-              className={`todo ${todo.completed ? 'completed' : ''} ${
-                todo.id.toString().startsWith('temp-') ? 'temp-item' : ''
-              }`}
+              className={`todo ${todo.completed ? 'completed' : ''}`}
             >
               <label className="todo__status-label">
                 <input
@@ -162,25 +160,27 @@ export const App: React.FC = () => {
               <span data-cy="TodoTitle" className="todo__title">
                 {todo.title}
               </span>
+
               <button
                 type="button"
                 className="todo__remove"
                 data-cy="TodoDelete"
-                disabled={todo.id.toString().startsWith('temp-')}
                 onClick={() => {
-                  if (!todo.id.toString().startsWith('temp-')) {
-                    setTodos(prevTodos =>
-                      prevTodos.filter(t => t.id !== todo.id),
-                    );
-                    client
-                      .delete(`/todos/${todo.id}`)
-                      .catch(() => setError('Unable to delete todo'));
-                  }
+                  setTodos(prevTodos =>
+                    prevTodos.filter(t => t.id !== todo.id),
+                  );
+                  client
+                    .delete(`/todos/${todo.id}`)
+                    .catch(() => setError('Unable to delete todo'));
                 }}
               >
                 ×
               </button>
-              <div data-cy="TodoLoader" className="modal overlay is-active">
+
+              <div
+                data-cy="TodoLoader"
+                className={`modal overlay ${isLoading ? 'is-active' : 'is-hidden'}`}
+              >
                 <div className="modal-background has-background-whitester"></div>
                 <div className="loader"></div>
               </div>
