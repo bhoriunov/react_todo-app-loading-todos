@@ -84,7 +84,11 @@ export const App: React.FC = () => {
       // setTodos(prevTodos => prevTodos.filter(todo => todo.id !== -tempId));
       setError('Unable to add todo');
       setIsLoading(false);
-      setTodos(prevTodos => prevTodos.filter(todo => todo.id !== +tempId));
+      setTodos(prevTodos =>
+        prevTodos.map(todo =>
+          todo.id === +tempId ? { ...todo, error: true } : todo,
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -176,13 +180,10 @@ export const App: React.FC = () => {
               >
                 ×
               </button>
-
-              {todo.id.toString().startsWith('temp-') && (
-                <div data-cy="TodoLoader" className="modal overlay">
-                  <div className="modal-background has-background-whitester"></div>
-                  <div className="loader"></div>
-                </div>
-              )}
+              <div data-cy="TodoLoader" className="modal overlay is-active">
+                <div className="modal-background has-background-whitester"></div>
+                <div className="loader"></div>
+              </div>
             </div>
           ))}
         </section>
